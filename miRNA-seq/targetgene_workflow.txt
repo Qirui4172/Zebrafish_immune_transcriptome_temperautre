@@ -1,0 +1,12 @@
+# Use miRanda
+miranda DEmiRNAs.fa dre_threeUTR.fa -sc 140 -en -20 -scale 4 -strict -go -4 -ge -9 -quiet -out mirna_target.miranda
+
+# Use RNAhybride
+RNAhybrid -b 1 -c -m 50000 -e -20 -p 0.05 -s 3utr_human -t dre_threeUTR.fa -q DEmiRNAs.fa > mirna_target.hybrid
+
+# Use targetScan
+perl targetscan_60.pl DEmiRNAs_fortargetscan.fa UTR_Sequences_all.txt mirnaTarget_targetscan_raw.txt
+
+# Overlap target genes
+perl overlapTargets.pl mirnaTargets_hybrid.txt mirnaTargets_miranda.txt mirnaTargets_targetscan.txt hybrid miranda targetscan 2 mirnaTargets_overlap2.txt
+
