@@ -27,31 +27,39 @@ sub Usage{
 	Date: 05-01-2021\n";
 }
 
-if(@ARGV!=8){Usage();exit;}
+if (@ARGV != 8) {
+	Usage();
+	exit 1;
+}
 
 
 #=============================================================================================
-my ($list1, $list2, $list3, $name1, $name2, $name3, $minoverlap, $output)=@ARGV;
+my ($list1, $list2, $list3, $name1, $name2, $name3, $minoverlap, $output) = @ARGV;
+die "minOverlap must be 1, 2, or 3\n" unless $minoverlap =~ /^[123]$/;
 my %targetList;
 
 open (LIST1, "$list1") or die "$!\n";
 while(<LIST1>){
 	chomp;
+	next if /^\s*$/;
 	my @tmp=(split/\t/, $_); # dre-miR-122-5p ENSDARG00000000442  slc39a13
+	die "Expected at least two tab-separated columns in $list1\n" if @tmp < 2;
 	my $key=$tmp[0]."_".$tmp[1];
 	my $value=$_."\t".$name1."\t1";
 	$targetList{$key}=$value;
 }
 close LIST1;
 
-
 open (LIST2, "$list2") or die "$!\n";
 while (<LIST2>){
 	chomp;
+	next if /^\s*$/;
 	my @tmp=(split/\t/, $_); # dre-miR-122-5p ENSDARG00000000442  slc39a13
+	die "Expected at least two tab-separated columns in $list2\n" if @tmp < 2;
 	my $key=$tmp[0]."_".$tmp[1];
 	if(exists $targetList{$key}){
 		my @tmp2=(split/\t/, $targetList{$key}); # dre-miR-122-5p ENSDARG00000000442 slc39a13 hybrid 1
+		next if $tmp2[3] =~ /(?:^|,)\Q$name2\E(?:,|$)/;
 		$tmp2[3]=$tmp2[3].",".$name2;
 		$tmp2[4]+=1; # dre-miR-122-5p ENSDARG00000000442 slc39a13 hybrid,mirand 2
 		my $value=$tmp2[0]."\t".$tmp2[1]."\t".$tmp2[2]."\t".$tmp2[3]."\t".$tmp2[4];
@@ -67,10 +75,13 @@ close LIST2;
 open (LIST3, "$list3") or die "$!\n";
 while(<LIST3>){
 	chomp;
+	next if /^\s*$/;
 	my @tmp=(split/\t/, $_); # dre-miR-122-5p ENSDARG00000000442  slc39a13
+	die "Expected at least two tab-separated columns in $list3\n" if @tmp < 2;
 	my $key=$tmp[0]."_".$tmp[1];
 	if(exists $targetList{$key}){
 		my @tmp2=(split/\t/, $targetList{$key}); # dre-miR-122-5p ENSDARG00000000442 slc39a13 hybrid 1
+		next if $tmp2[3] =~ /(?:^|,)\Q$name3\E(?:,|$)/;
 		$tmp2[3]=$tmp2[3].",".$name3;
 		$tmp2[4]+=1; # dre-miR-122-5p ENSDARG00000000442 slc39a13 hybrid,mirand 2
 		my $value=$tmp2[0]."\t".$tmp2[1]."\t".$tmp2[2]."\t".$tmp2[3]."\t".$tmp2[4];
@@ -82,7 +93,6 @@ while(<LIST3>){
 }
 close LIST3;
 
-
 open (OUT, "> $output") or die "$!\n";
 my @all_keys=sort{$targetList{$a} cmp $targetList{$b}} keys %targetList;
 foreach (@all_keys){
@@ -92,5 +102,3 @@ foreach (@all_keys){
 	}
 }
 close OUT;
-
-
